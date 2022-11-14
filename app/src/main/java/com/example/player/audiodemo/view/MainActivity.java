@@ -4,9 +4,11 @@ import android.Manifest;
 import android.content.Context;
 import android.os.Bundle;
 
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,6 +21,7 @@ import com.example.player.recycler.RecyclerItemClickListener;
 
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 
 public class MainActivity<T extends MainContract.Presenter> extends AppCompatActivity implements MainContract.View {
 
@@ -40,9 +43,18 @@ public class MainActivity<T extends MainContract.Presenter> extends AppCompatAct
         requestPermission();//请求麦克风权限
         initView();//初始化布局
         mPresenter.init();
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
     }
 
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        //android.R.id.home对应应用程序图标的id
+        if(item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
     private void initView() {
         mRoot = findViewById(R.id.root);
