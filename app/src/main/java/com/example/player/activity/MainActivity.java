@@ -1,10 +1,10 @@
-package com.example.player.acitivity;
+package com.example.player.activity;
 
 import android.annotation.SuppressLint;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,13 +24,14 @@ import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 import com.miraclegarden.library.app.MiracleGardenActivity;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 
 public class MainActivity extends MiracleGardenActivity<ActivityMainBinding> implements OnPermissionCallback {
-    private final List<String> urls = new ArrayList<>();
-    private final List<VideoBase> videoBases = new ArrayList<>();
+    private final List<File> urls = new ArrayList<>();
+    public static final List<VideoBase> videoBases = new ArrayList<>();
     private MainAdapter mainAdapter;
     private AlertDialog alertDialog;
 
@@ -41,6 +42,7 @@ public class MainActivity extends MiracleGardenActivity<ActivityMainBinding> imp
         XXPermissions.with(this)
                 .permission(Permission.MANAGE_EXTERNAL_STORAGE)
                 .permission(Permission.RECORD_AUDIO)
+                .permission(Permission.CAMERA)
                 .request(this);
         initDataSpecs();
         initMediaMetadataRetriever();
@@ -53,13 +55,10 @@ public class MainActivity extends MiracleGardenActivity<ActivityMainBinding> imp
     public void showLoadingDialog() {
         alertDialog = new AlertDialog.Builder(this).create();
         alertDialog.setCancelable(false);
-        alertDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
-            @Override
-            public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_SEARCH || keyCode == KeyEvent.KEYCODE_BACK)
-                    return true;
-                return false;
-            }
+        alertDialog.setOnKeyListener((dialog, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_SEARCH || keyCode == KeyEvent.KEYCODE_BACK)
+                return true;
+            return false;
         });
         alertDialog.show();
         alertDialog.setContentView(R.layout.base_loading);
@@ -84,7 +83,7 @@ public class MainActivity extends MiracleGardenActivity<ActivityMainBinding> imp
          * method stub
          */
         if (item.getItemId() == R.id.audio) {
-            Intent intent = new Intent(this, com.example.player.audiodemo.view.MainActivity.class);
+            Intent intent = new Intent(this, MediaRecorderActivity.class);
             startActivity(intent);
         }
         return super.onOptionsItemSelected(item);
@@ -99,44 +98,14 @@ public class MainActivity extends MiracleGardenActivity<ActivityMainBinding> imp
 
     @SuppressLint("NotifyDataSetChanged")
     private void initMediaMetadataRetriever() {
-        new Thread(() -> {
-            for (String url : urls) {
-                try {
-                    VideoBase videoBase = new VideoBase();
-                    MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-                    retriever.setDataSource(url, new HashMap());
-                    videoBase.bitmap = retriever.getFrameAtTime();
-                    String timeString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                    String mime = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE);
-                    videoBase.time = Long.parseLong(timeString);
-                    videoBase.mime = mime;
-                    videoBase.album = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
-                    if (url.contains("mp3")) {
-                        videoBase.isMp3 = true;
-                    }
-                    videoBases.add(videoBase);
-                    retriever.release();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            runOnUiThread(() -> {
-                mainAdapter.notifyDataSetChanged();
-                dismissLoadingDialog();
-            });
-        }).start();
     }
 
     private void initView() {
         RecyclerItemClickListener.OnItemClickListener.Normal normal = new RecyclerItemClickListener.OnItemClickListener.Normal() {
             @Override
             public void onItemClick(View view, int position) {
-                String url = urls.get(position);
-                if (url.contains("mp3")) {
-                    return;
-                }
                 Intent intent = new Intent(MainActivity.this, VideoActivity.class);
-                intent.putExtra("url", url);
+                intent.putExtra("file", urls.get(position).getAbsolutePath());
                 startActivity(intent);
             }
 
@@ -152,10 +121,16 @@ public class MainActivity extends MiracleGardenActivity<ActivityMainBinding> imp
     }
 
     private void initDataSpecs() {
-        //urls.add("https://vdn3.vzuu.com/HD/2fa45ebe-a096-11ea-9903-92eb25be4f16.mp4?disable_local_cache=1&bu=http-da4bec50&c=avc.0.0&f=mp4&expiration=1668342927&auth_key=1668342927-0-0-259a936fd884f92a8410a79a12920901&v=tx&pu=da4bec50");
-        urls.add("http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4");
-        urls.add("http://vjs.zencdn.net/v/oceans.mp4");
-        urls.add("https://www.xzmp3.com/down/93827b74a196.mp3");
+        urls.clear();
+        File path = new File(getCacheDir() + File.separator + "JCamera");
+        // 判断SD卡是否存在，并且是否具有读写权限
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            File[] files = path.listFiles();// 读取文件夹下文件
+            if (files != null) {
+                Collections.addAll(urls, files);
+            }
+            System.out.println(urls.size());
+        }
     }
 
     @Override
@@ -163,5 +138,27 @@ public class MainActivity extends MiracleGardenActivity<ActivityMainBinding> imp
         if (all) {
             //XXPermissions.startPermissionActivity(MainActivity.this, permissions);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        videoBases.clear();
+        initDataSpecs();
+        for (File file : urls) {
+            VideoBase videoBase = new VideoBase();
+            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+            retriever.setDataSource(file.getAbsolutePath());
+            videoBase.bitmap = retriever.getFrameAtTime();
+            String timeString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            String mime = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE);
+            videoBase.time = Long.parseLong(timeString);
+            videoBase.mime = mime;
+            videoBase.name = file.getName();
+            videoBase.album = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+            videoBases.add(videoBase);
+        }
+        mainAdapter.notifyDataSetChanged();
+        dismissLoadingDialog();
+        super.onResume();
     }
 }

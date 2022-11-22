@@ -98,7 +98,6 @@ public class MainActivity<T extends MainContract.Presenter> extends AppCompatAct
     }
 
     private void requestPermission() {
-
        /* PermissionGen.with(this)
                 .addRequestCode(100)
                 .permissions(Manifest.permission.RECORD_AUDIO, Manifest.permission.WAKE_LOCK)

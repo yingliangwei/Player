@@ -30,7 +30,7 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         VideoBase videoBase = videoBases.get(position);
-        holder.binding.title.setText("视频" + position);
+        holder.binding.title.setText(videoBase.name);
         try {
             holder.binding.duration.setText(videoBase.time + "ms");
             if (videoBase.isMp3) {
@@ -40,7 +40,7 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
             } else {
                 holder.binding.image.setImageBitmap(videoBase.bitmap);
             }
-            if (videoBase.album!=null){
+            if (videoBase.album != null) {
                 holder.binding.title.setText(videoBase.album);
             }
         } catch (Exception e) {

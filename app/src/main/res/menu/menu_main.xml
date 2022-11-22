@@ -3,6 +3,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item  android:title="录音" android:id="@+id/audio" app:showAsAction="always"
+    <item  android:title="录视频" android:id="@+id/audio" app:showAsAction="always"
         tools:ignore="HardcodedText" />
 </menu>

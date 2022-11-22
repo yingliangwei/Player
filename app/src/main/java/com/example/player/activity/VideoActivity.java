@@ -1,6 +1,7 @@
-package com.example.player.acitivity;
+package com.example.player.activity;
 
 import android.content.pm.ActivityInfo;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -9,7 +10,11 @@ import com.example.player.databinding.ActivityVideoBinding;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
+import com.google.android.exoplayer2.source.MediaSource;
 import com.miraclegarden.library.app.MiracleGardenActivity;
+
+import java.io.File;
 
 public class VideoActivity extends MiracleGardenActivity<ActivityVideoBinding> {
     private String url;
@@ -20,7 +25,7 @@ public class VideoActivity extends MiracleGardenActivity<ActivityVideoBinding> {
         super.onCreate(savedInstanceState);
         getSupportActionBar().hide();
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        url = getIntent().getStringExtra("url");
+        url = getIntent().getStringExtra("file");
         if (url == null) {
             return;
         }
@@ -39,7 +44,8 @@ public class VideoActivity extends MiracleGardenActivity<ActivityVideoBinding> {
             MediaItem mediaItem2 = MediaItem.fromUri("http://vjs.zencdn.net/v/oceans.mp4");
             player.addMediaItem(mediaItem);
             player.addMediaItem(mediaItem2);*/
-            MediaItem mediaItem = MediaItem.fromUri(url);
+            Uri uri=Uri.fromFile(new File(url));
+            MediaItem mediaItem = MediaItem.fromUri(uri);
             player.addMediaItem(mediaItem);
             player.setRepeatMode(Player.REPEAT_MODE_ALL);
             player.prepare();
@@ -48,6 +54,7 @@ public class VideoActivity extends MiracleGardenActivity<ActivityVideoBinding> {
             e.printStackTrace();
         }
     }
+
 
     @Override
     protected void onDestroy() {
